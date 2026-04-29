@@ -9,6 +9,7 @@ const userDataDir = '/tmp/job-copilot-smoke-profile';
 const screenshotPath = resolve(process.cwd(), 'job-copilot-smoke.webp');
 const appUrl = 'http://localhost:3002';
 const debugPort = 9223;
+const runHeadless = process.env.SMOKE_HEADLESS !== '0';
 
 const wait = (ms) => new Promise((resolveWait) => setTimeout(resolveWait, ms));
 
@@ -97,15 +98,20 @@ const evaluate = async (client, expression) => {
 rmSync(userDataDir, { recursive: true, force: true });
 mkdirSync(userDataDir, { recursive: true });
 
-const chrome = spawn(chromePath, [
-  '--headless=new',
+const chromeArgs = [
   '--disable-gpu',
   '--no-sandbox',
   `--remote-debugging-port=${debugPort}`,
   `--user-data-dir=${userDataDir}`,
   '--window-size=1440,1400',
   appUrl,
-]);
+];
+
+if (runHeadless) {
+  chromeArgs.unshift('--headless=new');
+}
+
+const chrome = spawn(chromePath, chromeArgs);
 
 try {
   const page = await waitForChrome();
