@@ -42,8 +42,8 @@ const starterProfile: CandidateProfile = {
   portfolio: 'https://your-portfolio.dev',
   github: 'https://github.com/yourname',
   targetRole: 'Frontend Junior Developer',
-  strengths: 'React, TypeScript, responsive UI, REST APIs, Node.js basics',
-  projects: 'AI chat app, job tracker dashboard, API-backed CRUD app',
+  strengths: 'React, TypeScript, Tailwind, accessibility, responsive UI',
+  projects: 'AI chat app, job tracker dashboard, responsive portfolio',
 };
 
 const initialJobs: JobLead[] = [
@@ -81,6 +81,11 @@ const roleSkills: Record<RoleFocus, string[]> = {
   'Backend Developer': ['Node.js', 'Express', 'SQL', 'REST APIs', 'authentication', 'testing'],
 };
 
+const roleProjects: Record<RoleFocus, string> = {
+  'Frontend Junior Developer': 'AI chat app, job tracker dashboard, responsive portfolio',
+  'Backend Developer': 'REST API task manager, job tracker CLI, SQL-backed CRUD app',
+};
+
 const statusStyles: Record<JobStatus, string> = {
   Saved: 'bg-slate-100 text-slate-700',
   Applied: 'bg-blue-100 text-blue-700',
@@ -93,6 +98,8 @@ const splitItems = (value: string) =>
     .split(',')
     .map((item) => item.trim())
     .filter(Boolean);
+
+const getStarterStrengths = (role: RoleFocus) => roleSkills[role].slice(0, 5).join(', ');
 
 const buildResume = (profile: CandidateProfile) => {
   const strengths = splitItems(profile.strengths);
@@ -138,6 +145,15 @@ function App() {
 
   const updateProfile = (field: keyof CandidateProfile, value: string) => {
     setProfile((current) => ({ ...current, [field]: value }));
+  };
+
+  const updateTargetRole = (targetRole: RoleFocus) => {
+    setProfile((current) => ({
+      ...current,
+      targetRole,
+      strengths: getStarterStrengths(targetRole),
+      projects: roleProjects[targetRole],
+    }));
   };
 
   const updateStatus = (id: number, status: JobStatus) => {
@@ -189,7 +205,7 @@ function App() {
                 Target role
                 <select
                   value={profile.targetRole}
-                  onChange={(event) => updateProfile('targetRole', event.target.value)}
+                  onChange={(event) => updateTargetRole(event.target.value as RoleFocus)}
                   className="w-full rounded-xl border border-slate-200 bg-white px-3 py-3 text-slate-900 outline-none ring-indigo-500 transition focus:ring-2"
                 >
                   <option>Frontend Junior Developer</option>
