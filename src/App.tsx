@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   FiBriefcase,
   FiCheckCircle,
@@ -6,6 +6,7 @@ import {
   FiCode,
   FiDownload,
   FiFileText,
+  FiPlus,
   FiServer,
   FiTarget,
   FiTerminal,
@@ -33,6 +34,13 @@ interface JobLead {
   status: JobStatus;
   priority: number;
   nextStep: string;
+}
+
+interface NewJobForm {
+  company: string;
+  role: string;
+  stack: string;
+  source: string;
 }
 
 const starterProfile: CandidateProfile = {
@@ -86,6 +94,52 @@ const roleProjects: Record<RoleFocus, string> = {
   'Backend Developer': 'REST API task manager, job tracker CLI, SQL-backed CRUD app',
 };
 
+const storageKeys = {
+  profile: 'job-copilot-profile',
+  jobs: 'job-copilot-jobs',
+};
+
+const emptyJobForm: NewJobForm = {
+  company: '',
+  role: '',
+  stack: '',
+  source: '',
+};
+
+const isRoleFocus = (value: unknown): value is RoleFocus => value === 'Frontend Junior Developer' || value === 'Backend Developer';
+
+const readStoredProfile = () => {
+  if (typeof window === 'undefined') return starterProfile;
+
+  try {
+    const storedProfile = window.localStorage.getItem(storageKeys.profile);
+    if (!storedProfile) return starterProfile;
+
+    const parsedProfile = JSON.parse(storedProfile) as Partial<CandidateProfile>;
+    return {
+      ...starterProfile,
+      ...parsedProfile,
+      targetRole: isRoleFocus(parsedProfile.targetRole) ? parsedProfile.targetRole : starterProfile.targetRole,
+    };
+  } catch {
+    return starterProfile;
+  }
+};
+
+const readStoredJobs = () => {
+  if (typeof window === 'undefined') return initialJobs;
+
+  try {
+    const storedJobs = window.localStorage.getItem(storageKeys.jobs);
+    if (!storedJobs) return initialJobs;
+
+    const parsedJobs = JSON.parse(storedJobs) as JobLead[];
+    return Array.isArray(parsedJobs) && parsedJobs.length > 0 ? parsedJobs : initialJobs;
+  } catch {
+    return initialJobs;
+  }
+};
+
 const statusStyles: Record<JobStatus, string> = {
   Saved: 'bg-slate-100 text-slate-700',
   Applied: 'bg-blue-100 text-blue-700',
@@ -133,18 +187,35 @@ const buildPitch = (profile: CandidateProfile, job: JobLead) => {
 };
 
 function App() {
-  const [profile, setProfile] = useState<CandidateProfile>(starterProfile);
-  const [jobs, setJobs] = useState<JobLead[]>(initialJobs);
+  const [profile, setProfile] = useState<CandidateProfile>(readStoredProfile);
+  const [jobs, setJobs] = useState<JobLead[]>(readStoredJobs);
   const [selectedJobId, setSelectedJobId] = useState(initialJobs[0].id);
+  const [newJob, setNewJob] = useState<NewJobForm>(emptyJobForm);
+  const [saveNotice, setSaveNotice] = useState('Changes save in this browser automatically.');
 
   const selectedJob = jobs.find((job) => job.id === selectedJobId) ?? jobs[0];
   const resumeDraft = useMemo(() => buildResume(profile), [profile]);
   const pitchDraft = useMemo(() => buildPitch(profile, selectedJob), [profile, selectedJob]);
   const appliedCount = jobs.filter((job) => job.status !== 'Saved').length;
-  const averagePriority = Math.round(jobs.reduce((sum, job) => sum + job.priority, 0) / jobs.length);
+  const averagePriority = jobs.length > 0 ? Math.round(jobs.reduce((sum, job) => sum + job.priority, 0) / jobs.length) : 0;
+
+  useEffect(() => {
+    window.localStorage.setItem(storageKeys.profile, JSON.stringify(profile));
+  }, [profile]);
+
+  useEffect(() => {
+    window.localStorage.setItem(storageKeys.jobs, JSON.stringify(jobs));
+  }, [jobs]);
+
+  useEffect(() => {
+    if (!jobs.some((job) => job.id === selectedJobId)) {
+      setSelectedJobId(jobs[0]?.id ?? initialJobs[0].id);
+    }
+  }, [jobs, selectedJobId]);
 
   const updateProfile = (field: keyof CandidateProfile, value: string) => {
     setProfile((current) => ({ ...current, [field]: value }));
+    setSaveNotice('Profile saved locally.');
   };
 
   const updateTargetRole = (targetRole: RoleFocus) => {
@@ -154,10 +225,40 @@ function App() {
       strengths: getStarterStrengths(targetRole),
       projects: roleProjects[targetRole],
     }));
+    setSaveNotice(`${targetRole} starter content loaded and saved.`);
   };
 
   const updateStatus = (id: number, status: JobStatus) => {
     setJobs((current) => current.map((job) => (job.id === id ? { ...job, status } : job)));
+    setSaveNotice('Job status saved locally.');
+  };
+
+  const addJob = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    const company = newJob.company.trim();
+    const role = newJob.role.trim();
+    if (!company || !role) return;
+
+    const stack = splitItems(newJob.stack);
+    const matchedSkills = roleSkills[profile.targetRole].filter((skill) =>
+      stack.some((jobSkill) => jobSkill.toLowerCase().includes(skill.toLowerCase()) || skill.toLowerCase().includes(jobSkill.toLowerCase())),
+    );
+    const priority = Math.min(98, Math.max(68, 76 + matchedSkills.length * 4));
+    const job: JobLead = {
+      id: Date.now(),
+      company,
+      role,
+      stack: stack.length > 0 ? stack : roleSkills[profile.targetRole].slice(0, 4),
+      status: 'Saved',
+      priority,
+      nextStep: newJob.source.trim() ? `Review ${newJob.source.trim()} and tailor your resume` : 'Tailor resume bullets and apply',
+    };
+
+    setJobs((current) => [job, ...current]);
+    setSelectedJobId(job.id);
+    setNewJob(emptyJobForm);
+    setSaveNotice(`${company} saved as a new job lead.`);
   };
 
   const downloadResume = () => {
@@ -217,6 +318,7 @@ function App() {
             </div>
             <TextArea label="Skills, separated by commas" value={profile.strengths} onChange={(value) => updateProfile('strengths', value)} />
             <TextArea label="Projects, separated by commas" value={profile.projects} onChange={(value) => updateProfile('projects', value)} />
+            <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-3 text-sm font-semibold text-emerald-800">{saveNotice}</div>
           </Card>
 
           <Card title="2. Resume draft" icon={<FiDownload />}>
@@ -235,6 +337,25 @@ function App() {
 
         <section className="grid gap-6 lg:grid-cols-[1fr_0.9fr]">
           <Card title="3. Job tracker" icon={<FiBriefcase />}>
+            <form onSubmit={addJob} className="grid gap-3 rounded-2xl border border-dashed border-indigo-300 bg-indigo-50 p-4">
+              <div className="flex items-center gap-2 text-sm font-black uppercase tracking-wide text-indigo-700">
+                <FiPlus />
+                Add a real job lead
+              </div>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <TextField label="Company" value={newJob.company} onChange={(value) => setNewJob((current) => ({ ...current, company: value }))} />
+                <TextField label="Role" value={newJob.role} onChange={(value) => setNewJob((current) => ({ ...current, role: value }))} />
+              </div>
+              <TextField label="Stack / keywords" value={newJob.stack} onChange={(value) => setNewJob((current) => ({ ...current, stack: value }))} />
+              <TextField label="Source URL or note" value={newJob.source} onChange={(value) => setNewJob((current) => ({ ...current, source: value }))} />
+              <button
+                type="submit"
+                className="inline-flex w-fit items-center gap-2 rounded-xl bg-indigo-600 px-4 py-3 text-sm font-bold text-white transition hover:bg-indigo-500"
+              >
+                <FiPlus />
+                Save job lead
+              </button>
+            </form>
             <div className="grid gap-4">
               {jobs.map((job) => (
                 <button

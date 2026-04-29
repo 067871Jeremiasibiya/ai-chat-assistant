@@ -7,6 +7,8 @@ A React and TypeScript dashboard plus a small Node CLI for starting a junior fro
 - Builds a starter resume from your name, links, skills, and projects.
 - Tracks a focused list of junior frontend, backend, and full stack roles.
 - Generates a tailored application pitch for the selected job.
+- Saves web dashboard profile and job changes in browser storage.
+- Adds real job leads from the dashboard without editing code.
 - Provides local CLI commands for resume generation and application tracking.
 
 ## Tech stack
@@ -32,6 +34,8 @@ npm run dev
 ```
 
 Open http://localhost:3001 in your browser.
+
+The dashboard stores profile edits, job status changes, and added job leads in browser `localStorage`.
 
 ## CLI workflow
 
