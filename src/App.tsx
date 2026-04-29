@@ -140,6 +140,14 @@ const readStoredJobs = () => {
   }
 };
 
+const storeProfile = (nextProfile: CandidateProfile) => {
+  window.localStorage.setItem(storageKeys.profile, JSON.stringify(nextProfile));
+};
+
+const storeJobs = (nextJobs: JobLead[]) => {
+  window.localStorage.setItem(storageKeys.jobs, JSON.stringify(nextJobs));
+};
+
 const statusStyles: Record<JobStatus, string> = {
   Saved: 'bg-slate-100 text-slate-700',
   Applied: 'bg-blue-100 text-blue-700',
@@ -200,11 +208,11 @@ function App() {
   const averagePriority = jobs.length > 0 ? Math.round(jobs.reduce((sum, job) => sum + job.priority, 0) / jobs.length) : 0;
 
   useEffect(() => {
-    window.localStorage.setItem(storageKeys.profile, JSON.stringify(profile));
+    storeProfile(profile);
   }, [profile]);
 
   useEffect(() => {
-    window.localStorage.setItem(storageKeys.jobs, JSON.stringify(jobs));
+    storeJobs(jobs);
   }, [jobs]);
 
   useEffect(() => {
@@ -214,22 +222,34 @@ function App() {
   }, [jobs, selectedJobId]);
 
   const updateProfile = (field: keyof CandidateProfile, value: string) => {
-    setProfile((current) => ({ ...current, [field]: value }));
+    setProfile((current) => {
+      const nextProfile = { ...current, [field]: value };
+      storeProfile(nextProfile);
+      return nextProfile;
+    });
     setSaveNotice('Profile saved locally.');
   };
 
   const updateTargetRole = (targetRole: RoleFocus) => {
-    setProfile((current) => ({
-      ...current,
-      targetRole,
-      strengths: getStarterStrengths(targetRole),
-      projects: roleProjects[targetRole],
-    }));
+    setProfile((current) => {
+      const nextProfile = {
+        ...current,
+        targetRole,
+        strengths: getStarterStrengths(targetRole),
+        projects: roleProjects[targetRole],
+      };
+      storeProfile(nextProfile);
+      return nextProfile;
+    });
     setSaveNotice(`${targetRole} starter content loaded and saved.`);
   };
 
   const updateStatus = (id: number, status: JobStatus) => {
-    setJobs((current) => current.map((job) => (job.id === id ? { ...job, status } : job)));
+    setJobs((current) => {
+      const nextJobs = current.map((job) => (job.id === id ? { ...job, status } : job));
+      storeJobs(nextJobs);
+      return nextJobs;
+    });
     setSaveNotice('Job status saved locally.');
   };
 
@@ -255,7 +275,11 @@ function App() {
       nextStep: newJob.source.trim() ? `Review ${newJob.source.trim()} and tailor your resume` : 'Tailor resume bullets and apply',
     };
 
-    setJobs((current) => [job, ...current]);
+    setJobs((current) => {
+      const nextJobs = [job, ...current];
+      storeJobs(nextJobs);
+      return nextJobs;
+    });
     setSelectedJobId(job.id);
     setNewJob(emptyJobForm);
     setSaveNotice(`${company} saved as a new job lead.`);
