@@ -6,6 +6,11 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
+    "job": "node scripts/job-copilot.mjs",
+    "job:init": "node scripts/job-copilot.mjs init",
+    "job:add": "node scripts/job-copilot.mjs add",
+    "job:list": "node scripts/job-copilot.mjs list",
+    "job:plan": "node scripts/job-copilot.mjs plan",
     "preview": "vite preview"
   },
   "dependencies": {

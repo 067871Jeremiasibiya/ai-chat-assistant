@@ -1,72 +1,68 @@
-# AI Chat Assistant
+# Job Search Copilot
 
-A modern, beautiful AI chat interface built with React, TypeScript, and Tailwind CSS.
+A React and TypeScript dashboard plus a small Node CLI for starting a junior frontend/backend developer job search.
 
-![AI Chat Assistant](https://images.unsplash.com/photo-1677442136019-21780ecad995?w=800&h=400&fit=crop)
+## What it does
 
-## Features
+- Builds a starter resume from your name, links, skills, and projects.
+- Tracks a focused list of junior frontend, backend, and full stack roles.
+- Generates a tailored application pitch for the selected job.
+- Provides local CLI commands for resume generation and application tracking.
 
-- Beautiful, modern UI with gradient design
-- Real-time chat interface with typing indicators
-- Markdown support for formatted responses
-- Smooth animations with Framer Motion
-- Responsive design for all devices
-- Dark/Light message bubbles
-- Chat history management
+## Tech stack
 
-## Tech Stack
+- React 18
+- TypeScript
+- Tailwind CSS
+- Vite
+- Node.js CLI scripts
 
-- **React 18** - UI Framework
-- **TypeScript** - Type Safety
-- **Tailwind CSS** - Styling
-- **Framer Motion** - Animations
-- **React Markdown** - Message formatting
-- **Vite** - Build tool
+## Getting started
 
-## Getting Started
+Install dependencies:
 
-1. Install dependencies:
 ```bash
-npm install
+npm ci
 ```
 
-2. Start the development server:
+Start the web dashboard:
+
 ```bash
 npm run dev
 ```
 
-3. Open http://localhost:3001 in your browser
+Open http://localhost:3001 in your browser.
 
-## Connecting to OpenAI API
+## CLI workflow
 
-To use real AI responses, update the `getAIResponse` function in `src/App.tsx`:
+Create a resume starter and print the job plan:
 
-```typescript
-const getAIResponse = async (message: string): Promise<string> => {
-  const response = await fetch('https://api.openai.com/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${YOUR_API_KEY}`,
-    },
-    body: JSON.stringify({
-      model: 'gpt-3.5-turbo',
-      messages: [{ role: 'user', content: message }],
-    }),
-  });
-  
-  const data = await response.json();
-  return data.choices[0].message.content;
-};
+```bash
+npm run job:init
 ```
 
-## Author
+Add an application lead:
 
-**Jeremia Sibiya** - AI Engineer & React Developer
+```bash
+npm run job:add -- "Company" "Junior Frontend Developer" "Source or notes"
+```
 
-- GitHub: [@067871Jeremiasibiya](https://github.com/067871Jeremiasibiya)
-- LinkedIn: [Jeremia Sibiya](https://www.linkedin.com/in/jeremia-ostin-sibiya-278ba6359/)
+List tracked applications:
 
-## License
+```bash
+npm run job:list
+```
 
-MIT License
+Print the focused junior developer application plan:
+
+```bash
+npm run job:plan
+```
+
+CLI data is written to `job-copilot-data/applications.json`, and the generated starter resume is written to `junior-dev-resume-starter.md`.
+
+## Build
+
+```bash
+npm run build
+```
