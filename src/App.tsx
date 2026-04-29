@@ -197,7 +197,7 @@ const buildPitch = (profile: CandidateProfile, job: JobLead) => {
 function App() {
   const [profile, setProfile] = useState<CandidateProfile>(readStoredProfile);
   const [jobs, setJobs] = useState<JobLead[]>(readStoredJobs);
-  const [selectedJobId, setSelectedJobId] = useState(initialJobs[0].id);
+  const [selectedJobId, setSelectedJobId] = useState(() => jobs[0]?.id ?? initialJobs[0].id);
   const [newJob, setNewJob] = useState<NewJobForm>(emptyJobForm);
   const [saveNotice, setSaveNotice] = useState('Changes save in this browser automatically.');
 
@@ -323,12 +323,13 @@ function App() {
         <section className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
           <Card title="1. Build your starter profile" icon={<FiFileText />}>
             <div className="grid gap-4 sm:grid-cols-2">
-              <TextField label="Name" value={profile.name} onChange={(value) => updateProfile('name', value)} />
-              <TextField label="Email" value={profile.email} onChange={(value) => updateProfile('email', value)} />
-              <TextField label="Location" value={profile.location} onChange={(value) => updateProfile('location', value)} />
+              <TextField testId="profile-name" label="Name" value={profile.name} onChange={(value) => updateProfile('name', value)} />
+              <TextField testId="profile-email" label="Email" value={profile.email} onChange={(value) => updateProfile('email', value)} />
+              <TextField testId="profile-location" label="Location" value={profile.location} onChange={(value) => updateProfile('location', value)} />
               <label className="space-y-2 text-sm font-medium text-slate-700">
                 Target role
                 <select
+                  data-testid="target-role"
                   value={profile.targetRole}
                   onChange={(event) => updateTargetRole(event.target.value as RoleFocus)}
                   className="w-full rounded-xl border border-slate-200 bg-white px-3 py-3 text-slate-900 outline-none ring-indigo-500 transition focus:ring-2"
@@ -337,16 +338,18 @@ function App() {
                   <option>Backend Developer</option>
                 </select>
               </label>
-              <TextField label="Portfolio URL" value={profile.portfolio} onChange={(value) => updateProfile('portfolio', value)} />
-              <TextField label="GitHub URL" value={profile.github} onChange={(value) => updateProfile('github', value)} />
+              <TextField testId="profile-portfolio" label="Portfolio URL" value={profile.portfolio} onChange={(value) => updateProfile('portfolio', value)} />
+              <TextField testId="profile-github" label="GitHub URL" value={profile.github} onChange={(value) => updateProfile('github', value)} />
             </div>
-            <TextArea label="Skills, separated by commas" value={profile.strengths} onChange={(value) => updateProfile('strengths', value)} />
-            <TextArea label="Projects, separated by commas" value={profile.projects} onChange={(value) => updateProfile('projects', value)} />
-            <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-3 text-sm font-semibold text-emerald-800">{saveNotice}</div>
+            <TextArea testId="profile-strengths" label="Skills, separated by commas" value={profile.strengths} onChange={(value) => updateProfile('strengths', value)} />
+            <TextArea testId="profile-projects" label="Projects, separated by commas" value={profile.projects} onChange={(value) => updateProfile('projects', value)} />
+            <div data-testid="save-notice" className="rounded-2xl border border-emerald-200 bg-emerald-50 p-3 text-sm font-semibold text-emerald-800">
+              {saveNotice}
+            </div>
           </Card>
 
           <Card title="2. Resume draft" icon={<FiDownload />}>
-            <pre className="max-h-[31rem] overflow-auto whitespace-pre-wrap rounded-2xl bg-slate-950 p-4 text-sm leading-6 text-slate-100">
+            <pre data-testid="resume-draft" className="max-h-[31rem] overflow-auto whitespace-pre-wrap rounded-2xl bg-slate-950 p-4 text-sm leading-6 text-slate-100">
               {resumeDraft}
             </pre>
             <button
@@ -367,12 +370,13 @@ function App() {
                 Add a real job lead
               </div>
               <div className="grid gap-3 sm:grid-cols-2">
-                <TextField label="Company" value={newJob.company} onChange={(value) => setNewJob((current) => ({ ...current, company: value }))} />
-                <TextField label="Role" value={newJob.role} onChange={(value) => setNewJob((current) => ({ ...current, role: value }))} />
+                <TextField testId="new-job-company" label="Company" value={newJob.company} onChange={(value) => setNewJob((current) => ({ ...current, company: value }))} />
+                <TextField testId="new-job-role" label="Role" value={newJob.role} onChange={(value) => setNewJob((current) => ({ ...current, role: value }))} />
               </div>
-              <TextField label="Stack / keywords" value={newJob.stack} onChange={(value) => setNewJob((current) => ({ ...current, stack: value }))} />
-              <TextField label="Source URL or note" value={newJob.source} onChange={(value) => setNewJob((current) => ({ ...current, source: value }))} />
+              <TextField testId="new-job-stack" label="Stack / keywords" value={newJob.stack} onChange={(value) => setNewJob((current) => ({ ...current, stack: value }))} />
+              <TextField testId="new-job-source" label="Source URL or note" value={newJob.source} onChange={(value) => setNewJob((current) => ({ ...current, source: value }))} />
               <button
+                data-testid="save-job"
                 type="submit"
                 className="inline-flex w-fit items-center gap-2 rounded-xl bg-indigo-600 px-4 py-3 text-sm font-bold text-white transition hover:bg-indigo-500"
               >
@@ -384,6 +388,7 @@ function App() {
               {jobs.map((job) => (
                 <button
                   key={job.id}
+                  data-testid={`job-card-${job.company.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`}
                   onClick={() => setSelectedJobId(job.id)}
                   className={`rounded-2xl border p-4 text-left transition ${
                     selectedJobId === job.id ? 'border-indigo-500 bg-indigo-50' : 'border-slate-200 bg-white hover:border-indigo-300'
@@ -405,6 +410,7 @@ function App() {
                   </div>
                   <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
                     <select
+                      data-testid={`job-status-${job.company.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`}
                       value={job.status}
                       onClick={(event) => event.stopPropagation()}
                       onChange={(event) => updateStatus(job.id, event.target.value as JobStatus)}
@@ -423,12 +429,12 @@ function App() {
           </Card>
 
           <Card title="4. Tailored pitch" icon={<FiClipboard />}>
-            <div className="rounded-2xl bg-indigo-50 p-4">
+            <div data-testid="selected-job" className="rounded-2xl bg-indigo-50 p-4">
               <p className="text-sm font-bold uppercase tracking-wide text-indigo-700">Selected role</p>
               <h3 className="mt-1 text-2xl font-black text-slate-950">{selectedJob.role}</h3>
               <p className="text-slate-600">{selectedJob.company}</p>
             </div>
-            <pre className="mt-4 whitespace-pre-wrap rounded-2xl bg-slate-950 p-4 text-sm leading-6 text-slate-100">{pitchDraft}</pre>
+            <pre data-testid="tailored-pitch" className="mt-4 whitespace-pre-wrap rounded-2xl bg-slate-950 p-4 text-sm leading-6 text-slate-100">{pitchDraft}</pre>
             <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
               Keep it honest: this tool helps tailor your story, but you should only claim skills and projects you can explain.
             </div>
@@ -473,13 +479,15 @@ interface FieldProps {
   label: string;
   value: string;
   onChange: (value: string) => void;
+  testId?: string;
 }
 
-function TextField({ label, value, onChange }: FieldProps) {
+function TextField({ label, value, onChange, testId }: FieldProps) {
   return (
     <label className="space-y-2 text-sm font-medium text-slate-700">
       {label}
       <input
+        data-testid={testId}
         value={value}
         onChange={(event) => onChange(event.target.value)}
         className="w-full rounded-xl border border-slate-200 px-3 py-3 text-slate-900 outline-none ring-indigo-500 transition focus:ring-2"
@@ -488,11 +496,12 @@ function TextField({ label, value, onChange }: FieldProps) {
   );
 }
 
-function TextArea({ label, value, onChange }: FieldProps) {
+function TextArea({ label, value, onChange, testId }: FieldProps) {
   return (
     <label className="block space-y-2 text-sm font-medium text-slate-700">
       {label}
       <textarea
+        data-testid={testId}
         value={value}
         onChange={(event) => onChange(event.target.value)}
         rows={3}

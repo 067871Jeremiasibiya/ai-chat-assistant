@@ -57,6 +57,12 @@ List tracked applications:
 npm run job:list
 ```
 
+Run a real Chrome smoke test against a running Vite server:
+
+```bash
+npm run smoke:browser
+```
+
 Print the focused junior developer application plan:
 
 ```bash

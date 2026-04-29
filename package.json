@@ -11,6 +11,7 @@
     "job:add": "node scripts/job-copilot.mjs add",
     "job:list": "node scripts/job-copilot.mjs list",
     "job:plan": "node scripts/job-copilot.mjs plan",
+    "smoke:browser": "node scripts/smoke-browser.mjs",
     "preview": "vite preview"
   },
   "dependencies": {
